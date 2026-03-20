@@ -5,35 +5,88 @@
     <title>UBS - Painel de Chamadas</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        body { background-color: #f0f2f5; overflow: hidden; display: flex; flex-direction: column; height: 100vh; margin: 0; }
-        .painel-principal { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-        .chamada-box { background: white; padding: 50px; border-radius: 30px; box-shadow: 0 20px-50px rgba(0,0,0,0.3); width: 80%; border-bottom: 15px solid var(--verde-ubs); animation: pular 0.5s infinite alternate; }
-        @keyframes pular { from { transform: translateY(0); } to { transform: translateY(-10px); } }
-        .nome-paciente { font-size: 7rem; color: var(--verde-ubs); margin: 0; font-weight: 900; text-transform: uppercase; }
-        .setor-destino { font-size: 3.5rem; color: #555; margin-top: 20px; font-weight: bold; }
-        .rodape { background: var(--verde-ubs); color: white; padding: 20px; font-size: 1.5rem; text-align: center; font-weight: bold; }
+        body { 
+            background-color: #f0f2f5; 
+            overflow: hidden; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+            margin: 0; 
+            font-family: sans-serif;
+        }
+        .painel-principal { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            text-align: center; 
+        }
+        .chamada-box { 
+            background: white; 
+            padding: 50px; 
+            border-radius: 30px; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3); 
+            width: 85%; 
+            border-bottom: 20px solid var(--verde-ubs); 
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+        .nome-paciente { 
+            font-size: 8rem; 
+            color: var(--verde-ubs); 
+            margin: 0; 
+            font-weight: 900; 
+            text-transform: uppercase; 
+            word-wrap: break-word;
+        }
+        .setor-destino { 
+            font-size: 4rem; 
+            color: #444; 
+            margin-top: 20px; 
+            font-weight: bold; 
+            background: #eee;
+            padding: 10px 20px;
+            border-radius: 15px;
+            display: inline-block;
+        }
+        .rodape { 
+            background: var(--verde-ubs); 
+            color: white; 
+            padding: 25px; 
+            font-size: 2rem; 
+            text-align: center; 
+            font-weight: bold; 
+            letter-spacing: 2px;
+        }
+        #msgEspera { font-size: 4rem; color: #bbb; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div class="painel-principal">
         <div id="boxChamada" class="chamada-box" style="display: none;">
-            <div style="font-size: 2rem; color: #888; font-weight: bold; margin-bottom: 10px;">PRÓXIMO PACIENTE:</div>
+            <div style="font-size: 2.5rem; color: #888; font-weight: bold; margin-bottom: 20px;">PACIENTE CHAMADO:</div>
             <h1 class="nome-paciente" id="nomeExibido">---</h1>
             <div class="setor-destino" id="setorExibido">---</div>
         </div>
         
-        <div id="msgEspera" style="font-size: 3rem; color: #999;">Aguardando próximo atendimento...</div>
+        <div id="msgEspera">AGUARDANDO CHAMADA...</div>
     </div>
 
     <div class="rodape">
-        UBS - UNIDADE BÁSICA DE SAÚDE | Mantenha seus documentos em mãos
+        UBS - UNIDADE BÁSICA DE SAÚDE
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
     <script>
+        // Suas chaves de configuração do Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyC-ttiUVBPAbDpJu627YtXON5xNmrx6waY",
             authDomain: "sistemaubs-c7a44.firebaseapp.com",
@@ -42,35 +95,46 @@
             messagingSenderId: "685343776891",
             appId: "1:685343776891:web:a09fc98eff4a0422af02de"
         };
-        firebase.initializeApp(firebaseConfig);
+
+        // Inicializa o Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const db = firebase.database();
 
-        // Variável para não repetir o som se for o mesmo chamado
-        let ultimoTimestamp = 0;
+        let ultimoIdChamada = "";
 
-        // Ouvir quando o médico clica em "CHAMAR"
-        db.ref('chamadaAtual').on('value', snapshot => {
+        // Fica vigiando a 'chamadaAtual' no Banco de Dados
+        db.ref('chamadaAtual').on('value', (snapshot) => {
             const dados = snapshot.val();
             
-            if (dados && dados.timestamp !== ultimoTimestamp) {
-                ultimoTimestamp = dados.timestamp;
-                
-                // Mostra o box e esconde a mensagem de espera
-                document.getElementById('boxChamada').style.display = 'block';
-                document.getElementById('msgEspera').style.display = 'none';
+            if (dados) {
+                // Só dispara se for uma chamada nova (baseado no timestamp)
+                if (dados.timestamp !== ultimoIdChamada) {
+                    ultimoIdChamada = dados.timestamp;
 
-                // Atualiza os nomes na tela
-                document.getElementById('nomeExibido').innerText = dados.nome;
-                document.getElementById('setorExibido').innerText = dados.setor;
+                    // Atualiza os textos na tela
+                    document.getElementById('nomeExibido').innerText = dados.nome;
+                    document.getElementById('setorExibido').innerText = dados.setor;
 
-                // Toca o som de chamada
-                const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-                audio.play().catch(e => console.log("Erro ao tocar som: Navegador exige interação prévia."));
+                    // Troca as mensagens
+                    document.getElementById('boxChamada').style.display = 'block';
+                    document.getElementById('msgEspera').style.display = 'none';
 
-                // Falar o nome do paciente (Opcional - Voz do Google)
-                const fala = new SpeechSynthesisUtterance(`Paciente: ${dados.nome}, dirigir-se ao ${dados.setor}`);
-                fala.lang = 'pt-BR';
-                window.speechSynthesis.speak(fala);
+                    // Toca o Som (Sino)
+                    try {
+                        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+                        audio.play();
+                    } catch (e) { console.log("Áudio bloqueado. Clique na tela."); }
+
+                    // Voz sintetizada chamando o nome
+                    try {
+                        const fala = new SpeechSynthesisUtterance("Paciente " + dados.nome + ", dirigir-se ao " + dados.setor);
+                        fala.lang = 'pt-BR';
+                        fala.rate = 0.9; // Velocidade um pouco mais lenta para ser clara
+                        window.speechSynthesis.speak(fala);
+                    } catch (e) { console.log("Voz bloqueada."); }
+                }
             }
         });
     </script>
