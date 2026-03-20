@@ -2,117 +2,73 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>UBS - Recepção</title>
+    <title>UBS - Recepção (Firebase)</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        .card-form { max-width: 550px; margin: 20px auto; padding: 40px; }
-        .campo { text-align: left; margin-bottom: 20px; }
-        label { display: block; font-weight: bold; color: var(--verde-ubs); margin-bottom: 8px; }
-        select, input[type="text"] { 
-            width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; transition: 0.3s; box-sizing: border-box;
-        }
-        select:focus, input[type="text"]:focus { border-color: var(--verde-ubs); }
-        
-        /* Estilo para a opção de Triagem */
-        .switch-triagem {
-            display: flex; align-items: center; gap: 10px;
-            background: var(--verde-claro); padding: 15px; border-radius: 8px; margin-bottom: 20px;
-        }
-
-        .lista-atendimento { max-width: 700px; margin: 0 auto; width: 90%; }
-        .paciente-row { 
-            background: white; padding: 15px 20px; border-radius: 10px; margin-bottom: 10px;
-            display: flex; justify-content: space-between; align-items: center; box-shadow: var(--sombra);
-        }
-        .status-badge { background: #e0eee0; color: #2d4f43; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-    </style>
 </head>
 <body>
-
     <header>
         <h1>Recepção de Pacientes</h1>
-        <button class="btn-acessar" style="width: auto; padding: 8px 20px; background: none; border: 1px solid white;" onclick="window.location.href='index.html'">← Menu Principal</button>
+        <button onclick="window.location.href='index.html'">← Menu</button>
     </header>
 
-    <div class="container" style="flex-direction: column; align-items: center;">
-        
-        <div class="card card-form">
-            <div class="icon-grande">📝</div>
-            <h2>Novo Atendimento</h2>
-            
-            <div class="campo">
-                <label>Nome do Paciente:</label>
-                <input type="text" id="nomePac" placeholder="Digite o nome completo">
+    <div class="container" style="flex-direction: column; align-items: center; padding-top: 20px;">
+        <div class="card" style="max-width: 500px; padding: 30px;">
+            <label>Nome do Paciente:</label>
+            <input type="text" id="nomePac" style="width:100%; padding:10px; margin: 10px 0;">
+
+            <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; margin: 10px 0;">
+                <input type="checkbox" id="checkTriagem" checked>
+                <label for="checkTriagem">Passar pela Triagem primeiro?</label>
             </div>
 
-            <div class="switch-triagem">
-                <input type="checkbox" id="checkTriagem" checked style="width: 20px; hieght: 20px; cursor: pointer;">
-                <label for="checkTriagem" style="margin: 0; cursor: pointer;">Passar pela Triagem primeiro?</label>
-            </div>
+            <label>Encaminhar para:</label>
+            <select id="destinoPac" style="width:100%; padding:10px; margin: 10px 0;">
+                <option value="CONSULTÓRIO 1 (MÉDICO)">🩺 Consultório 1 (Médico)</option>
+                <option value="CONSULTÓRIO 3 (ENFERMEIRA)">💉 Consultório 3 (Enfermeira)</option>
+                <option value="CONSULTÓRIO 4 (ENFERMEIRA)">👩‍⚕️ Consultório 4 (Enfermeira)</option>
+                <option value="CONSULTÓRIO ODONTOLÓGICO">🦷 Consultório Odontológico</option>
+                <option value="EMAESM">🧠 EMAESM</option>
+            </select>
 
-            <div class="campo">
-                <label>Encaminhar para:</label>
-                <select id="destinoPac">
-                    <option value="CONSULTÓRIO 1 (MÉDICO)">🩺 Consultório 1 (Médico)</option>
-                    <option value="CONSULTÓRIO 3 (ENFERMEIRA)">💉 Consultório 3 (Enfermeira)</option>
-                    <option value="CONSULTÓRIO 4 (ENFERMEIRA)">👩‍⚕️ Consultório 4 (Enfermeira)</option>
-                    <option value="CONSULTÓRIO ODONTOLÓGICO">🦷 Consultório Odontológico</option>
-                    <option value="EMAESM">🧠 EMAESM</option>
-                </select>
-            </div>
-
-            <button class="btn-acessar" onclick="cadastrar()">CADASTRAR E ENVIAR</button>
-        </div>
-
-        <div class="lista-atendimento">
-            <h3 style="color: var(--verde-ubs); text-align: center;">Fila de Espera Atual</h3>
-            <div id="listaEspera"></div>
+            <button class="btn-acessar" onclick="cadastrar()">CADASTRAR NO SISTEMA</button>
         </div>
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
     <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-ttiUVBPAbDpJu627YtXON5xNmrx6waY",
+            authDomain: "sistemaubs-c7a44.firebaseapp.com",
+            projectId: "sistemaubs-c7a44",
+            storageBucket: "sistemaubs-c7a44.firebasestorage.app",
+            messagingSenderId: "685343776891",
+            appId: "1:685343776891:web:a09fc98eff4a0422af02de"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
         function cadastrar() {
             const nome = document.getElementById('nomePac').value;
             const precisaTriagem = document.getElementById('checkTriagem').checked;
             const destinoFinal = document.getElementById('destinoPac').value;
 
-            if(!nome) return alert("Por favor, digite o nome do paciente!");
+            if(!nome) return alert("Digite o nome!");
 
-            let fila = JSON.parse(localStorage.getItem('filaPacientes')) || [];
-            
             const novo = {
                 id: Date.now(),
                 nome: nome,
-                // Se marcar triagem, o status inicial é Triagem. Se não, vai direto pro destino final.
                 status: precisaTriagem ? "TRIAGEM" : destinoFinal,
-                destinoFinal: destinoFinal, // Guardamos para onde ele vai depois
+                destinoFinal: destinoFinal,
                 hora: new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})
             };
 
-            fila.push(novo);
-            localStorage.setItem('filaPacientes', JSON.stringify(fila));
-            
-            document.getElementById('nomePac').value = "";
-            renderLista();
+            db.ref('fila').child(novo.id).set(novo).then(() => {
+                alert("Paciente cadastrado com sucesso!");
+                document.getElementById('nomePac').value = "";
+            });
         }
-
-        function renderLista() {
-            const listaDiv = document.getElementById('listaEspera');
-            const fila = JSON.parse(localStorage.getItem('filaPacientes')) || [];
-            
-            listaDiv.innerHTML = fila.map(p => `
-                <div class="paciente-row">
-                    <div>
-                        <strong>${p.nome}</strong><br>
-                        <small style="color:#666">Destino: ${p.status}</small>
-                    </div>
-                    <span class="status-badge">${p.hora}</span>
-                </div>
-            `).join('');
-        }
-
-        window.addEventListener('storage', renderLista);
-        renderLista();
     </script>
 </body>
 </html>
