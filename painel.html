@@ -12,15 +12,13 @@
         .nome-paciente { font-size: 8rem; color: var(--verde-ubs); margin: 0; font-weight: 900; text-transform: uppercase; }
         .setor-destino { font-size: 4rem; color: #444; margin-top: 20px; font-weight: bold; background: #eee; padding: 10px 20px; border-radius: 15px; display: inline-block; }
         .rodape { background: var(--verde-ubs); color: white; padding: 25px; font-size: 2rem; text-align: center; font-weight: bold; }
-        
-        /* Botão de ativação para a Smart TV */
-        #btnAtivar { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); color: white; display: flex; align-items: center; justify-content: center; z-index: 9999; cursor: pointer; font-size: 3rem; text-align: center; padding: 20px; }
+        #btnAtivar { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); color: white; display: flex; align-items: center; justify-content: center; z-index: 9999; cursor: pointer; font-size: 3rem; text-align: center; }
     </style>
 </head>
 <body>
 
     <div id="btnAtivar" onclick="this.style.display='none'">
-        CLIQUE AQUI PARA ATIVAR O PAINEL <br> (Necessário para o som funcionar)
+        CLIQUE AQUI PARA ATIVAR O PAINEL DA TV
     </div>
 
     <div class="painel-principal">
@@ -41,6 +39,7 @@
         const firebaseConfig = {
             apiKey: "AIzaSyC-ttiUVBPAbDpJu627YtXON5xNmrx6waY",
             authDomain: "sistemaubs-c7a44.firebaseapp.com",
+            databaseURL: "https://sistemaubs-c7a44-default-rtdb.firebaseio.com",
             projectId: "sistemaubs-c7a44",
             storageBucket: "sistemaubs-c7a44.firebasestorage.app",
             messagingSenderId: "685343776891",
@@ -52,7 +51,6 @@
 
         let ultimoTimestamp = 0;
 
-        // Fica vigiando a 'chamadaAtual'
         db.ref('chamadaAtual').on('value', (snapshot) => {
             const dados = snapshot.val();
             if (dados && dados.timestamp !== ultimoTimestamp) {
@@ -63,13 +61,13 @@
                 document.getElementById('nomeExibido').innerText = dados.nome;
                 document.getElementById('setorExibido').innerText = dados.setor;
 
-                // Som e Voz
                 try {
-                    new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play();
+                    const som = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+                    som.play();
                     const fala = new SpeechSynthesisUtterance("Paciente " + dados.nome + ", dirigir-se ao " + dados.setor);
                     fala.lang = 'pt-BR';
                     window.speechSynthesis.speak(fala);
-                } catch (e) { console.log("Erro de áudio"); }
+                } catch (e) { console.log("Áudio aguardando clique."); }
             }
         });
     </script>
