@@ -2,131 +2,110 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>UBS - Relatório Diário</title>
-    <link rel="stylesheet" href="style.css">
+    <title>UBS - Relatório de Atendimentos</title>
     <style>
-        .tabela-container {
-            width: 90%;
-            max-width: 1000px;
-            background: white;
-            margin: 20px auto;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: var(--sombra);
-            text-align: center;
-        }
-        .resumo-atendimentos {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin-bottom: 30px;
-        }
-        .contador-box {
-            background: var(--verde-ubs);
-            /* AQUI ESTÁ A CORREÇÃO: Texto em branco para contrastar com o fundo verde */
-            color: #ffffff !important; 
-            padding: 20px;
-            border-radius: 12px;
-            min-width: 180px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
-        .contador-box h2 { 
-            font-size: 3.5rem; 
-            margin: 10px 0 0 0; 
-            color: #ffffff !important; /* Garante que o número seja branco */
-        }
-        .contador-box small {
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            opacity: 0.9;
-        }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f4f0; margin: 0; padding: 20px; }
+        header { background: #2e5339; color: white; padding: 20px; text-align: center; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-voltar { background: white; color: #2e5339; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; text-align: left; }
-        th { background: var(--verde-ubs); color: white; padding: 15px; }
-        td { padding: 15px; border-bottom: 1px solid #eee; color: #333; }
+        .stats-container { display: flex; gap: 20px; margin-bottom: 20px; }
+        .stat-card { background: white; padding: 20px; border-radius: 10px; flex: 1; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .stat-card h3 { margin: 0; color: #666; font-size: 0.9rem; }
+        .stat-card p { margin: 10px 0 0; font-size: 1.8rem; font-weight: bold; color: #2e5339; }
+
+        table { width: 100%; background: white; border-collapse: collapse; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        th { background: #2e5339; color: white; padding: 15px; text-align: left; }
+        td { padding: 12px 15px; border-bottom: 1px solid #eee; color: #333; }
+        tr:hover { background: #f9fbf9; }
         
-        .btn-limpar {
-            background: #dc3545;
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            margin-top: 30px;
-            transition: 0.3s;
-        }
-        .btn-limpar:hover { background: #a71d2a; }
+        .tag-setor { background: #e8f5e9; color: #2e5339; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; }
+        .vazio { text-align: center; padding: 40px; color: #999; }
     </style>
 </head>
 <body>
 
     <header>
+        <button class="btn-voltar" onclick="window.location.href='index.html'">← Voltar</button>
         <h1>Relatório de Atendimentos</h1>
-        <button class="btn-acessar" style="width: auto; padding: 5px 15px; background: none; border: 1px solid white;" onclick="window.location.href='index.html'">← Voltar</button>
-    </header>
+        <div style="width: 100px;"></div> </header>
 
-    <div class="tabela-container">
-        <div class="resumo-atendimentos">
-            <div class="contador-box">
-                <small>Total do Dia</small>
-                <h2 id="totalPacientes">0</h2>
-            </div>
+    <div class="stats-container">
+        <div class="stat-card">
+            <h3>Total de Atendimentos</h3>
+            <p id="totalGeral">0</p>
         </div>
-
-        <table>
-            <thead>
-                <tr>
-                    <th>Paciente</th>
-                    <th>Setor de Atendimento</th>
-                    <th>Chegada</th>
-                    <th>Finalizado</th>
-                </tr>
-            </thead>
-            <tbody id="corpoTabela">
-                </tbody>
-        </table>
-
-        <button class="btn-limpar" onclick="limparDados()">Zerar Relatório de Hoje</button>
+        <div class="stat-card">
+            <h3>Hoje</h3>
+            <p id="totalHoje">0</p>
+        </div>
     </div>
 
+    <table>
+        <thead>
+            <tr>
+                <th>Paciente</th>
+                <th>Setor Final</th>
+                <th>Entrada</th>
+                <th>Finalizado</th>
+                <th>Data</th>
+            </tr>
+        </thead>
+        <tbody id="tabelaCorpo">
+            </tbody>
+    </table>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
     <script>
-        function atualizarRelatorio() {
-            const historico = JSON.parse(localStorage.getItem('historicoDia')) || [];
-            const tabela = document.getElementById('corpoTabela');
-            const contador = document.getElementById('totalPacientes');
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-ttiUVBPAbDpJu627YtXON5xNmrx6waY",
+            databaseURL: "https://sistemaubs-c7a44-default-rtdb.firebaseio.com",
+            projectId: "sistemaubs-c7a44"
+        };
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        const db = firebase.database();
 
-            // Atualiza o número (que agora será branco e visível!)
-            contador.innerText = historico.length;
+        // Data de hoje para o filtro
+        const hoje = new Date().toLocaleDateString('pt-BR');
 
-            if (historico.length === 0) {
-                tabela.innerHTML = "<tr><td colspan='4' style='text-align:center; padding: 40px; color: #999;'>Nenhum paciente finalizado registrado.</td></tr>";
+        db.ref('historico').on('value', snap => {
+            const corpo = document.getElementById('tabelaCorpo');
+            corpo.innerHTML = "";
+            const dados = snap.val();
+
+            if (!dados) {
+                corpo.innerHTML = '<tr><td colspan="5" class="vazio">Nenhum atendimento finalizado no histórico.</td></tr>';
                 return;
             }
 
-            const historicoInvertido = [...historico].reverse();
+            let contadorGeral = 0;
+            let contadorHoje = 0;
 
-            tabela.innerHTML = historicoInvertido.map(p => `
-                <tr>
-                    <td><strong>${p.nome}</strong></td>
-                    <td>${p.atendidoPor}</td>
-                    <td>${p.hora}</td>
-                    <td>${p.horaFinalizada}</td>
-                </tr>
-            `).join('');
-        }
+            // Converter objeto em array e inverter para ver os mais recentes primeiro
+            const lista = Object.values(dados).reverse();
 
-        function limparDados() {
-            if (confirm("Isso apagará permanentemente todos os registros de hoje. Confirmar?")) {
-                localStorage.setItem('historicoDia', JSON.stringify([]));
-                atualizarRelatorio();
-            }
-        }
+            lista.forEach(item => {
+                contadorGeral++;
+                
+                // Formatar data (se não existir no banco, usa a atual)
+                const dataAtendimento = item.data || hoje;
+                if(dataAtendimento === hoje) contadorHoje++;
 
-        atualizarRelatorio();
-        
-        // Atualiza automaticamente se um atendimento for finalizado em outra aba
-        window.addEventListener('storage', atualizarRelatorio);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${item.nome}</strong></td>
+                    <td><span class="tag-setor">${item.setor}</span></td>
+                    <td>${item.chegada || '--:--'}</td>
+                    <td>${item.finalizado || '--:--'}</td>
+                    <td>${dataAtendimento}</td>
+                `;
+                corpo.appendChild(tr);
+            });
+
+            document.getElementById('totalGeral').innerText = contadorGeral;
+            document.getElementById('totalHoje').innerText = contadorHoje;
+        });
     </script>
 </body>
 </html>
