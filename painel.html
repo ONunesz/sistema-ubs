@@ -2,160 +2,77 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Painel de Chamadas - UBS</title>
+    <title>UBS - Painel de Chamadas</title>
+    <link rel="stylesheet" href="style.css">
     <style>
-        :root {
-            --verde-dark: #2d4f43;
-            --verde-bg: #f0f4f2;
-            --branco: rgba(255, 255, 255, 0.95);
-        }
-
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #2d4f43 0%, #1e362d 100%);
-            margin: 0;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            color: white;
-            overflow: hidden;
-        }
-
-        header {
-            text-align: center;
-            padding: 20px;
-        }
-
-        .layout-principal {
-            display: flex;
-            flex: 1;
-            padding: 20px;
-            gap: 20px;
-            align-items: stretch;
-        }
-
-        /* Card do Paciente Atual (Esquerda) */
-        .chamada-atual {
-            flex: 2;
-            background: var(--branco);
-            border-radius: 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-            color: var(--verde-dark);
-            animation: pulse 2s infinite ease-in-out;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-            100% { transform: scale(1); }
-        }
-
-        .chamada-atual h2 { font-size: 2rem; margin: 0; opacity: 0.7; }
-        .chamada-atual .nome { font-size: 6rem; font-weight: 900; margin: 20px 0; text-align: center; text-transform: uppercase; }
-        .chamada-atual .setor { font-size: 3rem; background: var(--verde-dark); color: white; padding: 10px 40px; border-radius: 50px; }
-
-        /* Lista de Últimos Chamados (Direita) */
-        .historico-lateral {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 20px;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-
-        .historico-lateral h3 { border-bottom: 2px solid rgba(255,255,255,0.2); padding-bottom: 10px; text-align: center; }
-
-        .item-historico {
-            background: rgba(255, 255, 255, 0.9);
-            color: var(--verde-dark);
-            margin-bottom: 10px;
-            padding: 15px;
-            border-radius: 10px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .item-historico b { font-size: 1.2rem; }
-
-        /* Barra de Dicas Inferior */
-        .barra-dicas {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 15px;
-            text-align: center;
-            font-size: 1.2rem;
-            font-weight: 500;
-        }
+        body { background-color: #f0f2f5; overflow: hidden; display: flex; flex-direction: column; height: 100vh; margin: 0; }
+        .painel-principal { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .chamada-box { background: white; padding: 50px; border-radius: 30px; box-shadow: 0 20px-50px rgba(0,0,0,0.3); width: 80%; border-bottom: 15px solid var(--verde-ubs); animation: pular 0.5s infinite alternate; }
+        @keyframes pular { from { transform: translateY(0); } to { transform: translateY(-10px); } }
+        .nome-paciente { font-size: 7rem; color: var(--verde-ubs); margin: 0; font-weight: 900; text-transform: uppercase; }
+        .setor-destino { font-size: 3.5rem; color: #555; margin-top: 20px; font-weight: bold; }
+        .rodape { background: var(--verde-ubs); color: white; padding: 20px; font-size: 1.5rem; text-align: center; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>SISTEMA DE CHAMADAS - UBS</h1>
-    </header>
-
-    <div class="layout-principal">
-        <div class="chamada-atual">
-            <h2>PACIENTE</h2>
-            <div id="nomeAtual" class="nome">Aguardando...</div>
-            <div id="setorAtual" class="setor">---</div>
+    <div class="painel-principal">
+        <div id="boxChamada" class="chamada-box" style="display: none;">
+            <div style="font-size: 2rem; color: #888; font-weight: bold; margin-bottom: 10px;">PRÓXIMO PACIENTE:</div>
+            <h1 class="nome-paciente" id="nomeExibido">---</h1>
+            <div class="setor-destino" id="setorExibido">---</div>
         </div>
-
-        <div class="historico-lateral">
-            <h3>Últimas Chamadas</h3>
-            <div id="listaHistorico">
-                </div>
-        </div>
+        
+        <div id="msgEspera" style="font-size: 3rem; color: #999;">Aguardando próximo atendimento...</div>
     </div>
 
-    <div class="barra-dicas">
-        💚 Dica de Saúde: Mantenha sua carteira de vacinação atualizada • Beba água regularmente • Pratique atividades físicas
+    <div class="rodape">
+        UBS - UNIDADE BÁSICA DE SAÚDE | Mantenha seus documentos em mãos
     </div>
 
-    <audio id="alertaSonoro" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
     <script>
-        const historicoGlobal = [];
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-ttiUVBPAbDpJu627YtXON5xNmrx6waY",
+            authDomain: "sistemaubs-c7a44.firebaseapp.com",
+            projectId: "sistemaubs-c7a44",
+            storageBucket: "sistemaubs-c7a44.firebasestorage.app",
+            messagingSenderId: "685343776891",
+            appId: "1:685343776891:web:a09fc98eff4a0422af02de"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-        window.addEventListener('storage', (event) => {
-            if (event.key === 'pacienteAtual') {
-                const dados = JSON.parse(event.newValue);
+        // Variável para não repetir o som se for o mesmo chamado
+        let ultimoTimestamp = 0;
+
+        // Ouvir quando o médico clica em "CHAMAR"
+        db.ref('chamadaAtual').on('value', snapshot => {
+            const dados = snapshot.val();
+            
+            if (dados && dados.timestamp !== ultimoTimestamp) {
+                ultimoTimestamp = dados.timestamp;
                 
-                // 1. Atualiza a Tela Principal
-                document.getElementById('nomeAtual').innerText = dados.nome;
-                document.getElementById('setorAtual').innerText = dados.setor;
+                // Mostra o box e esconde a mensagem de espera
+                document.getElementById('boxChamada').style.display = 'block';
+                document.getElementById('msgEspera').style.display = 'none';
 
-                // 2. Som de Alerta
-                document.getElementById('alertaSonoro').play();
+                // Atualiza os nomes na tela
+                document.getElementById('nomeExibido').innerText = dados.nome;
+                document.getElementById('setorExibido').innerText = dados.setor;
 
-                // 3. Voz do Navegador
-                const msg = new SpeechSynthesisUtterance(`Paciente ${dados.nome}, comparecer ao ${dados.setor}`);
-                msg.lang = 'pt-BR';
-                msg.rate = 0.8; 
-                window.speechSynthesis.speak(msg);
+                // Toca o som de chamada
+                const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+                audio.play().catch(e => console.log("Erro ao tocar som: Navegador exige interação prévia."));
 
-                // 4. Adiciona ao histórico lateral
-                adicionarAoHistorico(dados);
+                // Falar o nome do paciente (Opcional - Voz do Google)
+                const fala = new SpeechSynthesisUtterance(`Paciente: ${dados.nome}, dirigir-se ao ${dados.setor}`);
+                fala.lang = 'pt-BR';
+                window.speechSynthesis.speak(fala);
             }
         });
-
-        function adicionarAoHistorico(paciente) {
-            const lista = document.getElementById('listaHistorico');
-            const novoItem = document.createElement('div');
-            novoItem.className = 'item-historico';
-            novoItem.innerHTML = `<b>${paciente.nome}</b><small>${paciente.setor}</small>`;
-            
-            lista.prepend(novoItem); // Adiciona no topo
-
-            // Mantém apenas as últimas 5 chamadas no histórico lateral
-            if (lista.children.length > 5) {
-                lista.removeChild(lista.lastChild);
-            }
-        }
     </script>
 </body>
 </html>
