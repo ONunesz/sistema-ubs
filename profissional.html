@@ -5,13 +5,15 @@
     <title>UBS - Área do Profissional</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f4; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f4; margin: 0; }
         header { background: #2e5339; color: white; padding: 15px 50px; text-align: center; display: flex; justify-content: space-between; align-items: center; }
         .container { padding: 20px; max-width: 900px; margin: auto; }
         .card-paciente { background: white; margin-bottom: 15px; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); display: flex; justify-content: space-between; align-items: center; border-left: 8px solid #ff9800; }
         .info b { font-size: 1.4rem; color: #2e5339; text-transform: uppercase; }
-        .btn-chamar { background: #ff9800; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .info p { margin: 5px 0 0; color: #666; font-weight: bold; }
+        .btn-chamar { background: #ff9800; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-right: 10px; }
         .btn-finalizar { background: #2e5339; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        #statusVazio { text-align: center; color: #999; margin-top: 50px; font-size: 1.2rem; }
     </style>
 </head>
 <body>
@@ -23,7 +25,7 @@
 
     <div class="container">
         <div id="listaPacientes">
-            <p style="text-align:center; color:gray;">Carregando fila...</p>
+            <p id="statusVazio">Carregando fila...</p>
         </div>
     </div>
 
@@ -42,60 +44,76 @@
         const meuSetor = localStorage.getItem('consultorioAtual') || "TRIAGEM";
         document.getElementById('txtSetor').innerText = "SETOR: " + meuSetor;
 
+        // Variável global para guardar os dados da fila localmente e evitar erros de aspas no HTML
+        let dadosFilaLocal = {};
+
         db.ref('fila').on('value', snap => {
             const lista = document.getElementById('listaPacientes');
             lista.innerHTML = "";
-            const dados = snap.val();
-            let temAlguem = false;
+            dadosFilaLocal = snap.val() || {};
+            
+            let temPaciente = false;
 
-            if (dados) {
-                Object.keys(dados).forEach(id => {
-                    if (dados[id].status === meuSetor) {
-                        temAlguem = true;
-                        lista.innerHTML += `
-                            <div class="card-paciente">
-                                <div class="info">
-                                    <b>${dados[id].nome}</b>
-                                    <p>🕒 Chegada: ${dados[id].hora}</p>
-                                    ${dados[id].destino ? `<small style="color:blue">Destino Final: ${dados[id].destino}</small>` : ''}
-                                </div>
-                                <div>
-                                    <button class="btn-chamar" onclick="chamar('${dados[id].nome}')">CHAMAR</button>
-                                    <button class="btn-finalizar" onclick="gerenciarAtendimento('${id}', ${JSON.stringify(dados[id])})">FINALIZAR</button>
-                                </div>
-                            </div>
-                        `;
-                    }
-                });
+            Object.keys(dadosFilaLocal).forEach(id => {
+                const p = dadosFilaLocal[id];
+                if (p.status === meuSetor) {
+                    temPaciente = true;
+                    
+                    // Criamos o elemento via JavaScript puro para ser mais seguro
+                    const card = document.createElement('div');
+                    card.className = 'card-paciente';
+                    card.innerHTML = `
+                        <div class="info">
+                            <b>${p.nome}</b>
+                            <p>🕒 Chegada: ${p.hora}</p>
+                            ${p.destino ? `<small style="color:blue">Destino: ${p.destino}</small>` : ''}
+                        </div>
+                        <div>
+                            <button class="btn-chamar" onclick="chamar('${p.nome}')">CHAMAR</button>
+                            <button class="btn-finalizar" onclick="gerenciarAtendimento('${id}')">FINALIZAR</button>
+                        </div>
+                    `;
+                    lista.appendChild(card);
+                }
+            });
+
+            if (!temPaciente) {
+                lista.innerHTML = '<p id="statusVazio">Nenhum paciente aguardando neste setor.</p>';
             }
-            if (!temAlguem) lista.innerHTML = '<p style="text-align:center; color:#999;">Ninguém aguardando aqui.</p>';
         });
 
         function chamar(nome) {
-            db.ref('chamadaAtual').set({ nome: nome, setor: meuSetor, timestamp: Date.now() });
+            db.ref('chamadaAtual').set({ 
+                nome: nome, 
+                setor: meuSetor, 
+                timestamp: Date.now() 
+            });
         }
 
-        function gerenciarAtendimento(id, paciente) {
-            // LÓGICA AUTOMÁTICA
+        function gerenciarAtendimento(id) {
+            const p = dadosFilaLocal[id];
+            if (!p) return;
+
             if (meuSetor === "TRIAGEM") {
-                const destino = paciente.destino || "CONSULTÓRIO 1 (MÉDICO)"; // Se a recepção esqueceu, manda pro 1
+                const destinoParaEnviar = p.destino || "CONSULTÓRIO 1 (MÉDICO)";
                 
-                if (confirm("Encaminhar " + paciente.nome + " para " + destino + "?")) {
+                if (confirm("Encaminhar " + p.nome + " para " + destinoParaEnviar + "?")) {
                     db.ref('fila').child(id).update({
-                        status: destino,
-                        hora: new Date().toLocaleTimeString()
-                    }).then(() => alert("Paciente encaminhado!"));
+                        status: destinoParaEnviar,
+                        hora: new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})
+                    }).then(() => alert("Encaminhado!"));
                 }
             } else {
-                // SE JÁ ESTIVER NO CONSULTÓRIO FINAL, FINALIZA DE VEZ
-                if (confirm("Finalizar atendimento de " + paciente.nome + "?")) {
+                if (confirm("Finalizar atendimento de " + p.nome + "?")) {
+                    // Salva no Histórico
                     db.ref('historico').push({
-                        nome: paciente.nome,
+                        nome: p.nome,
                         setor: meuSetor,
-                        chegada: paciente.hora,
-                        finalizado: new Date().toLocaleTimeString()
+                        chegada: p.hora,
+                        finalizado: new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})
                     });
-                    db.ref('fila').child(id).remove().then(() => alert("Atendimento concluído!"));
+                    // Remove da Fila
+                    db.ref('fila').child(id).remove().then(() => alert("Concluído!"));
                 }
             }
         }
