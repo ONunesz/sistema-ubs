@@ -5,100 +5,136 @@
     <title>UBS - Área do Profissional</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        .card-paciente {
-            background: white;
-            margin: 15px auto;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            max-width: 800px;
-        }
-        .btn-chamar { background: #ff9800; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-right: 10px; }
-        .btn-finalizar { background: #2e5339; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .info-paciente strong { font-size: 1.2rem; color: #333; }
+        body { font-family: sans-serif; background: #f4f7f4; margin: 0; padding: 0; }
+        header { background: #2e5339; color: white; padding: 20px; text-align: center; display: flex; justify-content: space-between; align-items: center; padding: 10px 50px; }
+        .container { padding: 20px; max-width: 900px; margin: auto; }
+        .card-paciente { background: white; margin-bottom: 15px; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); display: flex; justify-content: space-between; align-items: center; border-left: 8px solid #ff9800; }
+        .info b { font-size: 1.4rem; color: #2e5339; text-transform: uppercase; }
+        .info p { margin: 5px 0 0; color: #666; font-weight: bold; }
+        .acoes { display: flex; gap: 10px; }
+        .btn-chamar { background: #ff9800; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem; }
+        .btn-finalizar { background: #2e5339; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem; }
+        .btn-chamar:hover { background: #e68a00; }
+        .btn-finalizar:hover { background: #1e3a28; }
+        #statusVazio { text-align: center; color: #999; margin-top: 50px; font-size: 1.2rem; }
     </style>
 </head>
 <body>
-    <header style="background: #2e5339; color: white; padding: 20px; text-align: center;">
-        <h1 id="setorTitulo">Consultório</h1>
-        <button onclick="window.location.href='index.html'" style="background: white; color: #2e5339; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer;">Sair</button>
+
+    <header>
+        <h1 id="txtSetor">Carregando setor...</h1>
+        <button onclick="window.location.href='index.html'" style="background:rgba(255,255,255,0.2); color:white; border:1px solid white; padding:8px 15px; border-radius:5px; cursor:pointer;">Sair / Trocar Setor</button>
     </header>
 
-    <div id="listaPacientes" style="padding: 20px;">
+    <div class="container">
+        <div id="listaPacientes">
+            <p id="statusVazio">Buscando fila no servidor...</p>
         </div>
+    </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
     <script>
-        const config = {
+        // Configuração do seu Banco de Dados
+        const firebaseConfig = {
             apiKey: "AIzaSyC-ttiUVBPAbDpJu627YtXON5xNmrx6waY",
-            databaseURL: "https://sistemaubs-c7a44-default-rtdb.firebaseio.com", //
-            projectId: "sistemaubs-c7a44"
+            authDomain: "sistemaubs-c7a44.firebaseapp.com",
+            databaseURL: "https://sistemaubs-c7a44-default-rtdb.firebaseio.com",
+            projectId: "sistemaubs-c7a44",
+            storageBucket: "sistemaubs-c7a44.firebasestorage.app",
+            messagingSenderId: "685343776891",
+            appId: "1:685343776891:web:a09fc98eff4a0422af02de"
         };
-        firebase.initializeApp(config);
+
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const db = firebase.database();
 
+        // Identifica qual setor este computador está atendendo
         const meuSetor = localStorage.getItem('consultorioAtual') || "TRIAGEM";
-        document.getElementById('setorTitulo').innerText = "Setor: " + meuSetor;
+        document.getElementById('txtSetor').innerText = "ATENDIMENTO: " + meuSetor;
 
-        // Atualiza a lista de pacientes do setor em tempo real
+        // Monitora a fila em tempo real
         db.ref('fila').on('value', snap => {
             const lista = document.getElementById('listaPacientes');
             lista.innerHTML = "";
             const dados = snap.val();
 
+            let temPaciente = false;
+
             if (dados) {
                 Object.keys(dados).forEach(id => {
                     const p = dados[id];
+                    
+                    // SÓ MOSTRA PACIENTES DO MEU SETOR
                     if (p.status === meuSetor) {
+                        temPaciente = true;
                         lista.innerHTML += `
                             <div class="card-paciente">
-                                <div class="info-paciente">
-                                    <strong>${p.nome}</strong><br>
-                                    <small>Chegada: ${p.hora}</small>
+                                <div class="info">
+                                    <b>${p.nome}</b>
+                                    <p>🕒 Chegada: ${p.hora}</p>
                                 </div>
-                                <div>
-                                    <button class="btn-chamar" onclick="chamarPaciente('${p.nome}')">CHAMAR</button>
-                                    <button class="btn-finalizar" onclick="finalizarAtendimento('${id}', '${p.nome}', '${p.hora}')">FINALIZAR</button>
+                                <div class="acoes">
+                                    <button class="btn-chamar" onclick="chamar('${p.nome}')">CHAMAR NA TV</button>
+                                    <button class="btn-finalizar" onclick="gerenciarFinalizacao('${id}', '${p.nome}', '${p.hora}')">FINALIZAR</button>
                                 </div>
                             </div>
                         `;
                     }
                 });
-            } else {
-                lista.innerHTML = "<p style='text-align:center; color:#999;'>Nenhum paciente na fila.</p>";
+            }
+
+            if (!temPaciente) {
+                lista.innerHTML = '<p id="statusVazio">Não há pacientes aguardando neste setor.</p>';
             }
         });
 
-        // Envia para a TV
-        function chamarPaciente(nome) {
+        // FUNÇÃO PARA CHAMAR NA TV
+        function chamar(nome) {
             db.ref('chamadaAtual').set({
                 nome: nome,
                 setor: meuSetor,
                 timestamp: Date.now()
+            }).then(() => {
+                console.log("Chamado na TV!");
             });
         }
 
-        // Remove da fila e move para o histórico
-        function finalizarAtendimento(id, nome, horaChegada) {
-            if (confirm("Deseja finalizar o atendimento de " + nome + "?")) {
-                const horaFim = new Date().toLocaleTimeString();
+        // FUNÇÃO PARA FINALIZAR OU ENCAMINHAR
+        function gerenciarFinalizacao(id, nome, horaChegada) {
+            
+            // SE FOR TRIAGEM, PERGUNTA SE VAI PARA O MÉDICO
+            if (meuSetor === "TRIAGEM") {
+                const enviarParaMedico = confirm("Deseja encaminhar " + nome + " para o CONSULTÓRIO 1 (MÉDICO)?\n\nClique em OK para encaminhar.\nClique em Cancelar para dar alta direta.");
                 
-                // 1. Salva no Histórico (para o relatório)
+                if (enviarParaMedico) {
+                    // Atualiza o status para o Médico ver
+                    db.ref('fila').child(id).update({
+                        status: "CONSULTÓRIO 1 (MÉDICO)",
+                        horaEncaminhamento: new Date().toLocaleTimeString()
+                    }).then(() => {
+                        alert(nome + " foi enviado para a fila do Médico.");
+                    });
+                    return; // Interrompe aqui para não deletar o paciente
+                }
+            }
+
+            // SE NÃO FOR TRIAGEM (OU SE CANCELOU O ENCAMINHAMENTO), FINALIZA DE VEZ
+            if (confirm("Deseja encerrar o atendimento de " + nome + "?")) {
+                const horaFim = new Date().toLocaleTimeString();
+
+                // 1. Salva no Histórico para o Relatório
                 db.ref('historico').push({
                     nome: nome,
-                    status: meuSetor,
-                    hora: horaChegada,
-                    horaFim: horaFim
+                    setorFinal: meuSetor,
+                    horaChegada: horaChegada,
+                    horaFinalizado: horaFim
                 });
 
-                // 2. Remove da Fila Atual
+                // 2. Deleta da fila
                 db.ref('fila').child(id).remove().then(() => {
-                    alert("Atendimento finalizado!");
+                    alert("Atendimento finalizado com sucesso!");
                 });
             }
         }
