@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>UBS - Painel do Profissional</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .lista-atendimento { max-width: 800px; margin: 20px auto; width: 95%; }
+        .paciente-card {
+            background: white; padding: 20px; border-radius: 12px; margin-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: center; box-shadow: var(--sombra);
+            border-left: 8px solid var(--verde-ubs);
+        }
+        .info h3 { margin: 0; color: var(--verde-ubs); font-size: 1.4rem; }
+        .info small { color: #666; font-weight: bold; }
+        .btns { display: flex; gap: 10px; }
+        
+        .btn-chamar { background: #ffc107; color: #000; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-chamar:hover { background: #e0a800; }
+        
+        .btn-finalizar { background: var(--verde-ubs); color: #fff; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-finalizar:hover { background: #1e362d; }
+
+        .empty-msg { text-align: center; color: #999; margin-top: 50px; font-style: italic; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1 id="tituloSetor">Consultório</h1>
+        <button class="btn-acessar" style="width: auto; padding: 5px 15px; background: none; border: 1px solid white;" onclick="window.location.href='index.html'">← Sair do Painel</button>
+    </header>
+
+    <div class="lista-atendimento">
+        <h2 style="color: var(--verde-ubs); text-align: center; margin-bottom: 30px;">Fila de Espera</h2>
+        <div id="listaPacientes"></div>
+    </div>
+
+    <script>
+        // Pega o nome do consultório que foi clicado no menu principal
+        const setorAtual = localStorage.getItem('consultorioAtual') || "Geral";
+        document.getElementById('tituloSetor').innerText = setorAtual;
+
+        function carregarFila() {
+            const listaDiv = document.getElementById('listaPacientes');
+            const fila = JSON.parse(localStorage.getItem('filaPacientes')) || [];
+            
+            // FILTRO: Só mostra pacientes cujo status atual coincide com este painel
+            const filaFiltrada = fila.filter(p => p.status === setorAtual);
+
+            if (filaFiltrada.length === 0) {
+                listaDiv.innerHTML = `<p class="empty-msg">Nenhum paciente aguardando em: ${setorAtual}</p>`;
+                return;
+            }
+
+            listaDiv.innerHTML = filaFiltrada.map(p => {
+                // Localiza a posição real dele na fila principal (importante para não apagar o paciente errado)
+                const indexReal = fila.findIndex(f => f.id === p.id);
+                
+                return `
+                    <div class="paciente-card">
+                        <div class="info">
+                            <h3>${p.nome}</h3>
+                            <small>Chegada: ${p.hora} ${p.status === 'TRIAGEM' ? '| Destino: ' + p.destinoFinal : ''}</small>
+                        </div>
+                        <div class="btns">
+                            <button class="btn-chamar" onclick="chamar('${p.nome}')">CHAMAR</button>
+                            <button class="btn-finalizar" onclick="finalizar(${indexReal})">FINALIZAR</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function chamar(nome) {
+            // Envia o comando para a TV (painel.html)
+            localStorage.setItem('pacienteAtual', JSON.stringify({
+                nome: nome,
+                setor: setorAtual,
+                time: Date.now() // Garante que a TV detecte a mudança mesmo que seja o mesmo nome
+            }));
+            
+            // Toca um aviso sonoro local para o médico saber que chamou
+            const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+            audio.play().catch(e => console.log("Som bloqueado pelo navegador até interação."));
+        }
+
+        function finalizar(indexReal) {
+            let fila = JSON.parse(localStorage.getItem('filaPacientes')) || [];
+            const paciente = fila[indexReal];
+            const horaFinalizada = new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+
+            if (setorAtual === "TRIAGEM") {
+                // FLUXO DE TRIAGEM: Muda o status para o consultório final
+                paciente.status = paciente.destinoFinal;
+                alert(`${paciente.nome} encaminhado para ${paciente.destinoFinal}`);
+            } else {
+                // FLUXO DE CONSULTÓRIO: Salva no Histórico/Relatório e remove da fila
+                let historico = JSON.parse(localStorage.getItem('historicoDia')) || [];
+                
+                historico.push({
+                    nome: paciente.nome,
+                    hora: paciente.hora,
+                    horaFinalizada: horaFinalizada,
+                    atendidoPor: setorAtual
+                });
+                
+                localStorage.setItem('historicoDia', JSON.stringify(historico));
+                
+                // Remove o paciente da fila de espera
+                fila.splice(indexReal, 1);
+                alert("Atendimento Concluído com Sucesso!");
+            }
+
+            // Salva as alterações na fila principal
+            localStorage.setItem('filaPacientes', JSON.stringify(fila));
+            carregarFila();
+        }
+
+        // Fica vigiando o localStorage (se a recepção adicionar alguém, a lista atualiza sozinha)
+        window.addEventListener('storage', carregarFila);
+        
+        // Carrega ao abrir a página
+        carregarFila();
+    </script>
+</body>
+</html>

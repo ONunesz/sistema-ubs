@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Chamadas UBS - Início</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Ajustes extras para garantir o alinhamento dos cards de atendimento */
+        .secao-titulo {
+            width: 100%;
+            text-align: center;
+            color: var(--verde-ubs);
+            margin: 40px 0 10px 0;
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+        .container-consultorios {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+            max-width: 1200px;
+        }
+        .footer-admin {
+            margin: 50px 0;
+            text-align: center;
+        }
+        .btn-relatorio {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-relatorio:hover {
+            background-color: #5a6268;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Sistema de Chamadas UBS</h1>
+        <span>Gestão de Filas e Atendimento</span>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <div class="icon-grande">📋</div>
+            <h2>Recepção</h2>
+            <p>Cadastrar novos pacientes e gerenciar a fila de entrada.</p>
+            <button class="btn-acessar" onclick="window.location.href='cadastro.html'">Acessar</button>
+        </div>
+
+        <div class="card">
+            <div class="icon-grande">🖥️</div>
+            <h2>Display</h2>
+            <p>Painel de chamadas visual para a sala de espera.</p>
+            <button class="btn-acessar" onclick="window.location.href='painel.html'">Acessar</button>
+        </div>
+    </div>
+
+    <div class="secao-titulo">📢 Painéis de Atendimento</div>
+
+    <div class="container-consultorios">
+        
+        <div class="card">
+            <div class="icon-grande">🏥</div>
+            <h2>Triagem</h2>
+            <p>Classificação de Risco</p>
+            <button class="btn-acessar" onclick="abrirConsultorio('TRIAGEM')">Abrir Painel</button>
+        </div>
+
+        <div class="card">
+            <div class="icon-grande">🩺</div>
+            <h2>Consultório 1</h2>
+            <p>(Médico)</p>
+            <button class="btn-acessar" onclick="abrirConsultorio('CONSULTÓRIO 1 (MÉDICO)')">Abrir Painel</button>
+        </div>
+
+        <div class="card">
+            <div class="icon-grande">💉</div>
+            <h2>Consultório 3</h2>
+            <p>(Enfermeira)</p>
+            <button class="btn-acessar" onclick="abrirConsultorio('CONSULTÓRIO 3 (ENFERMEIRA)')">Abrir Painel</button>
+        </div>
+
+        <div class="card">
+            <div class="icon-grande">👩‍⚕️</div>
+            <h2>Consultório 4</h2>
+            <p>(Enfermeira)</p>
+            <button class="btn-acessar" onclick="abrirConsultorio('CONSULTÓRIO 4 (ENFERMEIRA)')">Abrir Painel</button>
+        </div>
+
+        <div class="card">
+            <div class="icon-grande">🦷</div>
+            <h2>Odonto</h2>
+            <p>Consultório Odontológico</p>
+            <button class="btn-acessar" onclick="abrirConsultorio('CONSULTÓRIO ODONTOLÓGICO')">Abrir Painel</button>
+        </div>
+
+        <div class="card">
+            <div class="icon-grande">🧠</div>
+            <h2>EMAESM</h2>
+            <p>Atendimento Especializado</p>
+            <button class="btn-acessar" onclick="abrirConsultorio('EMAESM')">Abrir Painel</button>
+        </div>
+
+    </div>
+
+    <div class="footer-admin">
+        <button class="btn-relatorio" onclick="window.location.href='relatorio.html'">
+            📊 Ver Relatório de Atendimentos
+        </button>
+    </div>
+
+    <div class="dica-barra" style="position: relative; margin-bottom: 20px;">
+        💚 Dica de Saúde: Mantenha sua carteira de vacinação atualizada.
+    </div>
+
+    <script>
+        // Função que salva o nome do consultório e redireciona
+        function abrirConsultorio(nome) {
+            localStorage.setItem('consultorioAtual', nome);
+            window.location.href = 'profissional.html';
+        }
+    </script>
+</body>
+</html>

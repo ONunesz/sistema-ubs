@@ -1,0 +1,93 @@
+:root {
+    --verde-ubs: #2d4f43;
+    --verde-claro: #f0f4f2;
+    --branco: #ffffff;
+    --texto: #333;
+    --sucesso: #28a745;
+}
+
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: var(--verde-claro);
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centraliza tudo horizontalmente */
+}
+
+header {
+    background-color: var(--verde-ubs);
+    color: white;
+    width: 100%;
+    padding: 30px 0;
+    text-align: center;
+}
+
+/* Esse é o segredo para os cards ficarem lado a lado */
+.container {
+    display: flex;
+    flex-wrap: wrap; /* Se não couber na tela, ele joga para baixo */
+    justify-content: center; /* Centraliza os cards */
+    gap: 20px; /* Espaço entre os cards */
+    padding: 40px 20px;
+    max-width: 1200px;
+}
+
+.card {
+    background: var(--branco);
+    width: 300px; /* Largura fixa para parecer um cartão */
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.icon-grande {
+    font-size: 50px;
+    margin-bottom: 15px;
+}
+
+h2 { margin: 10px 0; color: var(--verde-ubs); }
+
+p { color: #666; font-size: 14px; height: 40px; }
+
+.btn-acessar {
+    background-color: var(--verde-ubs);
+    color: white;
+    border: none;
+    padding: 12px;
+    width: 100%;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.btn-acessar:hover {
+    background-color: #1e362d;
+}
+
+.dica-barra {
+    background: var(--verde-ubs);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 20px;
+    position: fixed;
+    bottom: 20px;
+}
+
+.btn-consultorio {
+    background-color: white;
+    color: var(--verde-ubs);
+    border: 2px solid var(--verde-ubs);
+    padding: 15px 20px;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    min-width: 200px;
+    transition: 0.3s;
+}
+
+.btn-consultorio:hover {
+    background-color: var(--verde-ubs);
+    color: white;
+}

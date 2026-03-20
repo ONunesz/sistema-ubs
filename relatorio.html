@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>UBS - Relatório Diário</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .tabela-container {
+            width: 90%;
+            max-width: 1000px;
+            background: white;
+            margin: 20px auto;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: var(--sombra);
+            text-align: center;
+        }
+        .resumo-atendimentos {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        .contador-box {
+            background: var(--verde-ubs);
+            /* AQUI ESTÁ A CORREÇÃO: Texto em branco para contrastar com o fundo verde */
+            color: #ffffff !important; 
+            padding: 20px;
+            border-radius: 12px;
+            min-width: 180px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .contador-box h2 { 
+            font-size: 3.5rem; 
+            margin: 10px 0 0 0; 
+            color: #ffffff !important; /* Garante que o número seja branco */
+        }
+        .contador-box small {
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.9;
+        }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; text-align: left; }
+        th { background: var(--verde-ubs); color: white; padding: 15px; }
+        td { padding: 15px; border-bottom: 1px solid #eee; color: #333; }
+        
+        .btn-limpar {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 30px;
+            transition: 0.3s;
+        }
+        .btn-limpar:hover { background: #a71d2a; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Relatório de Atendimentos</h1>
+        <button class="btn-acessar" style="width: auto; padding: 5px 15px; background: none; border: 1px solid white;" onclick="window.location.href='index.html'">← Voltar</button>
+    </header>
+
+    <div class="tabela-container">
+        <div class="resumo-atendimentos">
+            <div class="contador-box">
+                <small>Total do Dia</small>
+                <h2 id="totalPacientes">0</h2>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Paciente</th>
+                    <th>Setor de Atendimento</th>
+                    <th>Chegada</th>
+                    <th>Finalizado</th>
+                </tr>
+            </thead>
+            <tbody id="corpoTabela">
+                </tbody>
+        </table>
+
+        <button class="btn-limpar" onclick="limparDados()">Zerar Relatório de Hoje</button>
+    </div>
+
+    <script>
+        function atualizarRelatorio() {
+            const historico = JSON.parse(localStorage.getItem('historicoDia')) || [];
+            const tabela = document.getElementById('corpoTabela');
+            const contador = document.getElementById('totalPacientes');
+
+            // Atualiza o número (que agora será branco e visível!)
+            contador.innerText = historico.length;
+
+            if (historico.length === 0) {
+                tabela.innerHTML = "<tr><td colspan='4' style='text-align:center; padding: 40px; color: #999;'>Nenhum paciente finalizado registrado.</td></tr>";
+                return;
+            }
+
+            const historicoInvertido = [...historico].reverse();
+
+            tabela.innerHTML = historicoInvertido.map(p => `
+                <tr>
+                    <td><strong>${p.nome}</strong></td>
+                    <td>${p.atendidoPor}</td>
+                    <td>${p.hora}</td>
+                    <td>${p.horaFinalizada}</td>
+                </tr>
+            `).join('');
+        }
+
+        function limparDados() {
+            if (confirm("Isso apagará permanentemente todos os registros de hoje. Confirmar?")) {
+                localStorage.setItem('historicoDia', JSON.stringify([]));
+                atualizarRelatorio();
+            }
+        }
+
+        atualizarRelatorio();
+        
+        // Atualiza automaticamente se um atendimento for finalizado em outra aba
+        window.addEventListener('storage', atualizarRelatorio);
+    </script>
+</body>
+</html>

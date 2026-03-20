@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Painel de Chamadas - UBS</title>
+    <style>
+        :root {
+            --verde-dark: #2d4f43;
+            --verde-bg: #f0f4f2;
+            --branco: rgba(255, 255, 255, 0.95);
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #2d4f43 0%, #1e362d 100%);
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: white;
+            overflow: hidden;
+        }
+
+        header {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .layout-principal {
+            display: flex;
+            flex: 1;
+            padding: 20px;
+            gap: 20px;
+            align-items: stretch;
+        }
+
+        /* Card do Paciente Atual (Esquerda) */
+        .chamada-atual {
+            flex: 2;
+            background: var(--branco);
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            color: var(--verde-dark);
+            animation: pulse 2s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        .chamada-atual h2 { font-size: 2rem; margin: 0; opacity: 0.7; }
+        .chamada-atual .nome { font-size: 6rem; font-weight: 900; margin: 20px 0; text-align: center; text-transform: uppercase; }
+        .chamada-atual .setor { font-size: 3rem; background: var(--verde-dark); color: white; padding: 10px 40px; border-radius: 50px; }
+
+        /* Lista de Últimos Chamados (Direita) */
+        .historico-lateral {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .historico-lateral h3 { border-bottom: 2px solid rgba(255,255,255,0.2); padding-bottom: 10px; text-align: center; }
+
+        .item-historico {
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--verde-dark);
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .item-historico b { font-size: 1.2rem; }
+
+        /* Barra de Dicas Inferior */
+        .barra-dicas {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>SISTEMA DE CHAMADAS - UBS</h1>
+    </header>
+
+    <div class="layout-principal">
+        <div class="chamada-atual">
+            <h2>PACIENTE</h2>
+            <div id="nomeAtual" class="nome">Aguardando...</div>
+            <div id="setorAtual" class="setor">---</div>
+        </div>
+
+        <div class="historico-lateral">
+            <h3>Últimas Chamadas</h3>
+            <div id="listaHistorico">
+                </div>
+        </div>
+    </div>
+
+    <div class="barra-dicas">
+        💚 Dica de Saúde: Mantenha sua carteira de vacinação atualizada • Beba água regularmente • Pratique atividades físicas
+    </div>
+
+    <audio id="alertaSonoro" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
+
+    <script>
+        const historicoGlobal = [];
+
+        window.addEventListener('storage', (event) => {
+            if (event.key === 'pacienteAtual') {
+                const dados = JSON.parse(event.newValue);
+                
+                // 1. Atualiza a Tela Principal
+                document.getElementById('nomeAtual').innerText = dados.nome;
+                document.getElementById('setorAtual').innerText = dados.setor;
+
+                // 2. Som de Alerta
+                document.getElementById('alertaSonoro').play();
+
+                // 3. Voz do Navegador
+                const msg = new SpeechSynthesisUtterance(`Paciente ${dados.nome}, comparecer ao ${dados.setor}`);
+                msg.lang = 'pt-BR';
+                msg.rate = 0.8; 
+                window.speechSynthesis.speak(msg);
+
+                // 4. Adiciona ao histórico lateral
+                adicionarAoHistorico(dados);
+            }
+        });
+
+        function adicionarAoHistorico(paciente) {
+            const lista = document.getElementById('listaHistorico');
+            const novoItem = document.createElement('div');
+            novoItem.className = 'item-historico';
+            novoItem.innerHTML = `<b>${paciente.nome}</b><small>${paciente.setor}</small>`;
+            
+            lista.prepend(novoItem); // Adiciona no topo
+
+            // Mantém apenas as últimas 5 chamadas no histórico lateral
+            if (lista.children.length > 5) {
+                lista.removeChild(lista.lastChild);
+            }
+        }
+    </script>
+</body>
+</html>
