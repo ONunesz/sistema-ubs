@@ -1,46 +1,106 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-<head><meta charset="UTF-8"><title>Médico - UBS</title><link rel="stylesheet" href="style.css"></head>
+<head>
+    <meta charset="UTF-8">
+    <title>UBS - Área do Profissional</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .card-paciente {
+            background: white;
+            margin: 15px auto;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 800px;
+        }
+        .btn-chamar { background: #ff9800; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-right: 10px; }
+        .btn-finalizar { background: #2e5339; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .info-paciente strong { font-size: 1.2rem; color: #333; }
+    </style>
+</head>
 <body>
-    <header><h1 id="setor">Consultório</h1><button onclick="window.location.href='index.html'">Menu</button></header>
-    <div id="lista" style="padding:20px;"></div>
+    <header style="background: #2e5339; color: white; padding: 20px; text-align: center;">
+        <h1 id="setorTitulo">Consultório</h1>
+        <button onclick="window.location.href='index.html'" style="background: white; color: #2e5339; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer;">Sair</button>
+    </header>
+
+    <div id="listaPacientes" style="padding: 20px;">
+        </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
     <script>
         const config = {
             apiKey: "AIzaSyC-ttiUVBPAbDpJu627YtXON5xNmrx6waY",
-            databaseURL: "https://sistemaubs-c7a44-default-rtdb.firebaseio.com",
+            databaseURL: "https://sistemaubs-c7a44-default-rtdb.firebaseio.com", //
             projectId: "sistemaubs-c7a44"
         };
         firebase.initializeApp(config);
         const db = firebase.database();
-        const meuSetor = localStorage.getItem('consultorioAtual') || "TRIAGEM";
-        document.getElementById('setor').innerText = meuSetor;
 
+        const meuSetor = localStorage.getItem('consultorioAtual') || "TRIAGEM";
+        document.getElementById('setorTitulo').innerText = "Setor: " + meuSetor;
+
+        // Atualiza a lista de pacientes do setor em tempo real
         db.ref('fila').on('value', snap => {
-            const dados = snap.val();
-            const lista = document.getElementById('lista');
+            const lista = document.getElementById('listaPacientes');
             lista.innerHTML = "";
-            if(dados) Object.keys(dados).forEach(id => {
-                if(dados[id].status === meuSetor) {
-                    lista.innerHTML += `<div class="card" style="margin:10px; padding:15px; display:flex; justify-content:space-between; align-items:center;">
-                        <span><strong>${dados[id].nome}</strong></span>
-                        <button onclick="chamar('${dados[id].nome}')" style="background:orange; padding:10px; border-radius:5px; border:none; cursor:pointer; font-weight:bold;">CHAMAR</button>
-                    </div>`;
-                }
-            });
+            const dados = snap.val();
+
+            if (dados) {
+                Object.keys(dados).forEach(id => {
+                    const p = dados[id];
+                    if (p.status === meuSetor) {
+                        lista.innerHTML += `
+                            <div class="card-paciente">
+                                <div class="info-paciente">
+                                    <strong>${p.nome}</strong><br>
+                                    <small>Chegada: ${p.hora}</small>
+                                </div>
+                                <div>
+                                    <button class="btn-chamar" onclick="chamarPaciente('${p.nome}')">CHAMAR</button>
+                                    <button class="btn-finalizar" onclick="finalizarAtendimento('${id}', '${p.nome}', '${p.hora}')">FINALIZAR</button>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+            } else {
+                lista.innerHTML = "<p style='text-align:center; color:#999;'>Nenhum paciente na fila.</p>";
+            }
         });
 
-        function chamar(nome) {
-            // Primeiro limpa a chamada antiga para a TV "sentir" o clique novo
-            db.ref('chamadaAtual').remove().then(() => {
-                db.ref('chamadaAtual').set({
-                    nome: nome,
-                    setor: meuSetor,
-                    timestamp: Date.now()
-                });
+        // Envia para a TV
+        function chamarPaciente(nome) {
+            db.ref('chamadaAtual').set({
+                nome: nome,
+                setor: meuSetor,
+                timestamp: Date.now()
             });
+        }
+
+        // Remove da fila e move para o histórico
+        function finalizarAtendimento(id, nome, horaChegada) {
+            if (confirm("Deseja finalizar o atendimento de " + nome + "?")) {
+                const horaFim = new Date().toLocaleTimeString();
+                
+                // 1. Salva no Histórico (para o relatório)
+                db.ref('historico').push({
+                    nome: nome,
+                    status: meuSetor,
+                    hora: horaChegada,
+                    horaFim: horaFim
+                });
+
+                // 2. Remove da Fila Atual
+                db.ref('fila').child(id).remove().then(() => {
+                    alert("Atendimento finalizado!");
+                });
+            }
         }
     </script>
 </body>
