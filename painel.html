@@ -3,152 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <title>UBS - Sistema de Chamadas</title>
-    <link rel="stylesheet" href="style.css">
     <style>
-        /* Estilos específicos para o layout complexo da imagem image_6.png */
+        /* ESTILO COMPLETO BASEADO NA IMAGEM image_a7a607.png */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f0f4f0; /* Cor de fundo suave */
+            background-color: #f0f4f0;
             display: flex;
             flex-direction: column;
             height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Botão de Áudio Superior */
+        .audio-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
         }
 
         header {
             text-align: center;
-            padding: 30px 0;
-            background-color: transparent;
+            padding: 20px 0;
         }
 
-        header h1 {
-            color: #2e5339;
-            margin: 0;
-            font-size: 2.5rem;
-        }
+        header h1 { color: #2e5339; margin: 0; font-size: 2.5rem; }
+        header p { color: #666; margin: 0; }
 
-        header p {
-            color: #666;
-            margin: 5px 0 0;
-        }
-
-        .audio-control {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.8);
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 8px 15px;
-            cursor: pointer;
+        /* Container que divide a tela em duas colunas */
+        .conteudo {
             display: flex;
-            align-items: center;
-            gap: 5px;
-            z-index: 100;
-        }
-
-        .container-principal {
             flex: 1;
-            display: flex;
-            gap: 20px;
-            padding: 0 40px;
-            justify-content: center;
+            padding: 20px 40px;
+            gap: 30px;
             align-items: flex-start;
         }
 
-        .painel-grande {
-            background-color: #fff;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        /* Lado Esquerdo: Chamada Principal */
+        .principal {
             flex: 2;
-            height: 70%;
+            background: white;
+            border-radius: 20px;
+            height: 450px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
             text-align: center;
-            padding: 40px;
-            max-width: 800px;
         }
 
-        .painel-lateral {
-            background-color: #fcfdfc;
-            border-radius: 15px;
-            border: 1px solid #eef;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.03);
-            flex: 1;
-            height: 70%;
-            padding: 20px;
-            max-width: 400px;
-        }
-
-        .painel-lateral h2 {
+        .nome-paciente {
+            font-size: 8rem;
             color: #2e5339;
-            margin-top: 0;
-        }
-
-        .dica-barra {
-            background-color: #2e5339;
-            color: #fff;
-            text-align: center;
-            padding: 15px 0;
-            width: 80%;
-            margin: 20px auto;
-            border-radius: 10px;
-            font-weight: bold;
-        }
-
-        /* Classes para a chamada principal */
-        .chamada-info {
-            display: none; /* Escondido até ter chamada */
-            width: 100%;
-        }
-
-        .chamada-info .titulo {
-            font-size: 1.5rem;
-            color: #777;
-        }
-
-        .chamada-info .nome {
-            font-size: 6rem;
-            color: #2e5339;
-            margin: 20px 0;
-            font-weight: bold;
+            font-weight: 900;
+            margin: 10px 0;
             text-transform: uppercase;
         }
 
-        .chamada-info .setor {
+        .setor-chamado {
             font-size: 3rem;
-            color: #444;
-            background: #e8e8e8;
-            padding: 10px 30px;
-            border-radius: 10px;
-            display: inline-block;
-            text-transform: uppercase;
-        }
-
-        /* Classes para a lista de últimas chamadas */
-        .historico-item {
-            border-bottom: 1px solid #eee;
-            padding: 10px 0;
-        }
-
-        .historico-item .historico-nome {
-            font-weight: bold;
-            color: #333;
-            text-transform: uppercase;
-        }
-
-        .historico-item .historico-setor {
             color: #666;
-            font-size: 0.9rem;
+            background: #f0f0f0;
+            padding: 10px 40px;
+            border-radius: 15px;
+        }
+
+        /* Lado Direito: Últimas Chamadas */
+        .lateral {
+            flex: 1;
+            background: #f9fbf9;
+            border-radius: 20px;
+            padding: 25px;
+            height: 450px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            border: 1px solid #e0e6e0;
+        }
+
+        .lateral h2 { color: #2e5339; margin-top: 0; border-bottom: 2px solid #2e5339; padding-bottom: 10px; }
+
+        .item-historico {
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .item-historico strong { font-size: 1.4rem; color: #333; text-transform: uppercase; }
+        .item-historico p { margin: 5px 0 0; color: #777; }
+
+        /* Rodapé de Dicas */
+        footer {
+            background-color: #2e5339;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 1.2rem;
+            margin: 20px 40px;
+            border-radius: 10px;
         }
     </style>
 </head>
 <body>
 
-    <button id="btnAudio" class="audio-control" onclick="ativarAudio()">
+    <button class="audio-btn" id="btnSom" onclick="this.style.display='none'; audioLigado=true;">
         🔊 Ativar Áudio
     </button>
 
@@ -157,35 +124,35 @@
         <p>Painel de Chamadas</p>
     </header>
 
-    <div class="container-principal">
-        <div class="painel-grande">
-            <div id="chamadaAtual" class="chamada-info">
-                <div class="titulo">PACIENTE CHAMADO:</div>
-                <div class="nome" id="nomeExibido">---</div>
-                <div class="setor" id="setorExibido">---</div>
+    <div class="conteudo">
+        <div class="principal">
+            <div id="blocoChamada" style="display: none;">
+                <p style="font-size: 1.5rem; color: #999; font-weight: bold;">PACIENTE CHAMADO:</p>
+                <div class="nome-paciente" id="nomeTV">---</div>
+                <div class="setor-chamado" id="setorTV">---</div>
             </div>
-            <div id="msgAguardando" style="font-size: 2rem; color: #bbb;">
+            <div id="msgAguardando" style="font-size: 2.5rem; color: #ccc;">
                 Aguardando primeira chamada...
             </div>
         </div>
 
-        <div class="painel-lateral">
+        <div class="lateral">
             <h2>Últimas Chamadas</h2>
-            <div id="historico" style="font-size: 1.2rem; color: #888;">
-                Nenhuma chamada ainda
+            <div id="listaHistorico">
+                <p style="color: #bbb;">Nenhuma chamada ainda</p>
             </div>
         </div>
     </div>
 
-    <div class="dica-barra">
-        <span id="dicaTexto">💚 Dica de Saúde: Mantenha sua carteira de vacinação atualizada • Beba água regularmente • Pratique atividades físicas</span>
-    </div>
+    <footer>
+        💚 Dica de Saúde: Mantenha sua carteira de vacinação atualizada • Beba água regularmente
+    </footer>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
     <script>
-        // Suas chaves de configuração do Firebase
+        // CONFIGURAÇÃO DO SEU FIREBASE (image_a8807f.png)
         const firebaseConfig = {
             apiKey: "AIzaSyC-ttiUVBPAbDpJu627YtXON5xNmrx6waY",
             authDomain: "sistemaubs-c7a44.firebaseapp.com",
@@ -196,87 +163,46 @@
             appId: "1:685343776891:web:a09fc98eff4a0422af02de"
         };
 
-        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+        let ultimoTS = 0;
+        let audioLigado = false;
+        let historico = [];
 
-        let ultimoTimestamp = 0;
-        let audioAtivado = false;
-        const historicoChamadas = [];
+        // ESCUTAR CHAMADAS
+        db.ref('chamadaAtual').on('value', snap => {
+            const data = snap.val();
+            if(data && data.timestamp !== ultimoTS) {
+                ultimoTS = data.timestamp;
 
-        // Ouvir quando o médico clica em "CHAMAR"
-        db.ref('chamadaAtual').on('value', snapshot => {
-            const dados = snapshot.val();
-            
-            if (dados && dados.timestamp !== ultimoTimestamp) {
-                ultimoTimestamp = dados.timestamp;
-                
-                // 1. Atualiza o Painel Grande (Chamada Atual)
-                document.getElementById('chamadaAtual').style.display = 'block';
+                // Atualiza tela principal
+                document.getElementById('blocoChamada').style.display = 'block';
                 document.getElementById('msgAguardando').style.display = 'none';
-                document.getElementById('nomeExibido').innerText = dados.nome;
-                document.getElementById('setorExibido').innerText = dados.setor;
+                document.getElementById('nomeTV').innerText = data.nome;
+                document.getElementById('setorTV').innerText = data.setor;
 
-                // 2. Toca som e fala (se o áudio estiver ativado)
-                if (audioAtivado) {
-                    try {
-                        const som = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-                        som.play();
-                        
-                        const fala = new SpeechSynthesisUtterance("Paciente " + dados.nome + ", dirigir-se ao " + dados.setor);
-                        fala.lang = 'pt-BR';
-                        fala.rate = 0.9;
-                        window.speechSynthesis.speak(fala);
-                    } catch (e) { console.log("Erro de áudio"); }
+                // Som e Voz
+                if(audioLigado) {
+                    new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play();
+                    const voz = new SpeechSynthesisUtterance(data.nome + " comparecer ao " + data.setor);
+                    voz.lang = 'pt-BR';
+                    window.speechSynthesis.speak(voz);
                 }
 
-                // 3. Atualiza o Histórico (Painel Lateral)
-                historicoChamadas.unshift(dados); // Adiciona no início da lista
-                atualizarHistorico();
+                // Atualiza Histórico Lateral
+                historico.unshift(data);
+                const lista = document.getElementById('listaHistorico');
+                lista.innerHTML = "";
+                historico.slice(0, 4).forEach(item => {
+                    lista.innerHTML += `
+                        <div class="item-historico">
+                            <strong>${item.nome}</strong>
+                            <p>${item.setor}</p>
+                        </div>
+                    `;
+                });
             }
         });
-
-        function atualizarHistorico() {
-            const historicoDiv = document.getElementById('historico');
-            historicoDiv.innerHTML = ""; // Limpa o histórico atual
-
-            // Mostra apenas as últimas 5 chamadas (para não ficar gigante)
-            const ultimasCinco = historicoChamadas.slice(0, 5);
-
-            if (ultimasCinco.length === 0) {
-                historicoDiv.innerText = "Nenhuma chamada ainda";
-                return;
-            }
-
-            ultimasCinco.forEach(chamada => {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'historico-item';
-                itemDiv.innerHTML = `
-                    <div class="historico-nome">${chamada.nome}</div>
-                    <div class="historico-setor">${chamada.setor}</div>
-                `;
-                historicoDiv.appendChild(itemDiv);
-            });
-        }
-
-        function ativarAudio() {
-            audioAtivado = true;
-            document.getElementById('btnAudio').style.display = 'none'; // Esconde o botão após clicar
-            console.log("Áudio ativado!");
-        }
-
-        // Dicas de saúde que mudam a cada 10 segundos
-        const dicas = [
-            "💚 Dica de Saúde: Mantenha sua carteira de vacinação atualizada • Beba água regularmente • Pratique atividades físicas",
-            "🍏 Dica de Nutrição: Coma mais frutas e vegetais • Evite alimentos ultraprocessados",
-            "🚭 Dica de Vida: Se você fuma, procure ajuda para parar • Cuide da sua saúde mental",
-            "🩸 Dica de Check-up: Faça seus exames preventivos anualmente • Controle sua pressão arterial",
-            "😴 Dica de Sono: Procure dormir entre 7 e 8 horas por noite • Cultive um ambiente tranquilo"
-        ];
-        let dicaIndex = 0;
-        setInterval(() => {
-            dicaIndex = (dicaIndex + 1) % dicas.length;
-            document.getElementById('dicaTexto').innerText = dicas[dicaIndex];
-        }, 10000); // 10000 milissegundos = 10 segundos
     </script>
 </body>
 </html>
